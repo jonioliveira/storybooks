@@ -25,8 +25,6 @@ endef
 
 ### 
 
-ENV?=staging
-
 tf-create-workspace: check-env
 	@cd terraform && \
 		terraform workspace new $(ENV)
