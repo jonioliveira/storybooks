@@ -12,24 +12,31 @@ create-tf-backend-bucket:
 
 ###
 
+check-env:
+ifndef ENV 
+	$(error Please set the environment variable ENV=[staging|prod])
+endif
+
+###
+
 define get-secret
 $(shell gcloud secrets versions access latest --secret=$(1) --project=$(PROJECT_ID))
 endef
 
 ### 
 
-ENV=staging
+ENV?=staging
 
-tf-create-workspace:
+tf-create-workspace: check-env
 	@cd terraform && \
 		terraform workspace new $(ENV)
 
-tf-init:
+tf-init: check-env
 	@cd terraform && \
 		terraform workspace select $(ENV) && \
 		terraform init
 
-tf-action:
+tf-action: check-env
 	@cd terraform && \
 		terraform workspace select $(ENV) && \
 		terraform $(TF_ACTION) \
@@ -50,25 +57,25 @@ CONTAINER_NAME=storybooks-api
 DB_NAME=storybooks
 OAUTH_CLIENT_ID=371900076600-vboh7hsai2eq6k079vfq1qsmrf4qu2lk.apps.googleusercontent.com
 
-ssh:
+ssh: check-env
 	@gcloud compute ssh $(SSH_STRING) \
 		--project=$(PROJECT_ID) \
 		--zone=$(ZONE)
 
-ssh-cmd:
+ssh-cmd: check-env
 	@gcloud compute ssh $(SSH_STRING) \
 		--project=$(PROJECT_ID) \
 		--zone=$(ZONE) \
 		--command="$(CMD)"
 
-build:
+build: check-env
 	@docker build -t $(LOCAL_TAG) .
 
-push:
+push: check-env
 	@docker tag $(LOCAL_TAG) $(REMOTE_TAG)
 	@docker push $(REMOTE_TAG)
 
-deploy:
+deploy: check-env
 	@$(MAKE) ssh-cmd CMD='docker-credential-gcr configure-docker'
 	@echo "Pulling container"
 	@$(MAKE) ssh-cmd CMD='docker pull $(REMOTE_TAG)'
